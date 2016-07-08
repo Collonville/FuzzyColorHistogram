@@ -3,15 +3,26 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:oxy="http://oxyplot.org/wpf"
         xmlns:local="clr-namespace:FuzzyColorHistogram1"
-        Title="Histogram" Height="400" Width="785.075">
-    <Grid x:Name="root" Background="Transparent" AllowDrop="True" Drop="root_Drop" Margin="0,0,0.2,-17.2">
+        Title="Histogram" Height="800" Width="785.075">
+    <Grid x:Name="root" Background="Transparent" AllowDrop="True" Drop="root_Drop" Margin="0,0,0.4,-61.2" Height="434" VerticalAlignment="Top">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="11*" />
-            <ColumnDefinition Width="19*" />
+
         </Grid.ColumnDefinitions>
-        <Image Source="{Binding ImageSource}" Margin="0,0,10,0"/>
-        <oxy:PlotView x:Name="plotHistogram" Model="{Binding HistModel}" Margin="1,0,220,10" Grid.Column="1"/>
-        <TextBlock x:Name="ToneResult" Grid.Column="1" HorizontalAlignment="Left" Margin="279,10,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="312" Width="205"/>
+        <Image Source="{Binding ImageSource}" Margin="10,10,610,264" OpacityMask="#FFE12626"/>
+        <oxy:PlotView x:Name="ColorHistogram" Model="{Binding ColorHist}" Margin="10,184,10,84" RenderTransformOrigin="0.505,1.266"/>
+        <Label Content="Fuzzifier" HorizontalAlignment="Left" Margin="175,71,0,0" VerticalAlignment="Top" Width="115" HorizontalContentAlignment="Center" Height="26"/>
+        <Label Content="Cluster Num" HorizontalAlignment="Left" Margin="175,97,0,0" VerticalAlignment="Top" Width="115" HorizontalContentAlignment="Center" Height="26"/>
+        <Label x:Name="ConvergenceValueTextBox" Content="Convergence Value" HorizontalAlignment="Left" Margin="175,123,0,0" VerticalAlignment="Top" HorizontalContentAlignment="Center" Height="26" Width="115"/>
+        <TextBox x:Name="FuzzifierTextBox" HorizontalAlignment="Left" Height="26" Margin="290,71,0,0" TextWrapping="Wrap" Text="1.9" VerticalAlignment="Top" Width="70" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+        <TextBox x:Name="ClusterNumTextBox" HorizontalAlignment="Left" Height="26" Margin="290,97,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Top" Width="70" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+        <TextBox x:Name="FuzzifierTextBox_Copy1" HorizontalAlignment="Left" Height="26" Margin="290,123,0,0" TextWrapping="Wrap" Text="0.00001" VerticalAlignment="Top" Width="70" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+        <Button x:Name="StartFCH" Content="Start FCH" HorizontalAlignment="Left" Margin="175,154,0,0" VerticalAlignment="Top" Width="185" Height="25" Click="StartFCH_Click"/>
+        <oxy:PlotView x:Name="LabHistogram" Model="{Binding LabHist}" Margin="10,355,10,-87" RenderTransformOrigin="0.505,1.266"/>
+        <oxy:PlotView x:Name="FCHHistogram" Model="{Binding FCHHist}" Margin="10,526,10,-258" RenderTransformOrigin="0.505,1.266"/>
+        <Label Content="Division" HorizontalAlignment="Left" Margin="175,10,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center" Height="26"/>
+        <TextBox x:Name="DivisionTextBox" HorizontalAlignment="Left" Height="26" Margin="290,9,0,0" TextWrapping="Wrap" Text="5" VerticalAlignment="Top" Width="70" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+        <TextBlock x:Name="InfoMationTextBlock" HorizontalAlignment="Left" Margin="365,10,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="237" Height="169"/>
+        <Button x:Name="CreateHistogramButton" Content="Create Histogram" HorizontalAlignment="Left" Margin="175,41,0,0" VerticalAlignment="Top" Width="185" Height="25" Click="CreateHistogramButton_Click"/>
     </Grid>
 </Window>
 
