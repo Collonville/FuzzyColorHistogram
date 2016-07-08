@@ -95,7 +95,7 @@ namespace FuzzyColorHistogram1
             this.RecalculateClusterMembershipValues();
         }
 
-        public void runFCM()
+        public void run()
         {
             int k = 0;
             do
@@ -105,7 +105,10 @@ namespace FuzzyColorHistogram1
                 CalculateClusterCentroids();
                 Step();
                 double Jnew = CalculateObjectiveFunction();
-                Console.WriteLine("Run method i={0} accuracy = {1} delta={2}", k, J, Math.Abs(J - Jnew));
+                double diff = Math.Abs(J - Jnew);
+
+               
+                Console.WriteLine("Run method i={0} accuracy = {1} delta={2}", k, J, diff);
 
                 // Format and display the TimeSpan value.
                 // string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", stopWatch.Elapsed.Hours, stopWatch.Elapsed.Minutes, stopWatch.Elapsed.Seconds, stopWatch.Elapsed.Milliseconds / 10);
@@ -113,7 +116,7 @@ namespace FuzzyColorHistogram1
 
                 //backgroundWorker.ReportProgress((100 * k) / maxIterations, "Iteration " + k);
 
-                if (Math.Abs(J - Jnew) < Eps) 
+                if (diff < Eps) 
                     break;
             }
             while (maxIterations > k);
@@ -193,8 +196,8 @@ namespace FuzzyColorHistogram1
         /// <summary>
         /// Calculates Euclidean Distance distance between a point and a cluster centroid
         /// </summary>
-        /// <param name="p">Point</param>
-        /// <param name="c">Centroid</param>
+        /// <param name="x">Point</param>
+        /// <param name="v">Centroid</param>
         /// <returns>Calculated distance</returns>
         private double CalculateEuclideanDistance(double x, double v) 
         {
