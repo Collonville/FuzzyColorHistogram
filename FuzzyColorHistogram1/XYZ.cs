@@ -21,23 +21,44 @@ namespace FuzzyColorHistogram1
             {0.027031, 0.070689, 0.991338}
         });
 
-        public static Vector<double> RGBtoXYZ(Vector<double> rgb)
+        public static Vector<double> RGB2XYZ(Vector<double> rgb)
         {
             return (sRGB_D65Matrix * (rgb / 255.0));
         }
 
-        public static Vector<double> RGBtoXYZ(Vector<double> rgb, string standard)
+        public static Vector<double> RGB2XYZ(Vector<double> rgb, string standard)
         {
-            //TODO:ガンマ補正の式を入れる
+            Vector<double> XYZ = new DenseVector(3);
             if (standard.Equals("sRGB"))
             {
+                rgb /= 255.0;
 
+                rgb[0] = GammaCorrection_sRGB(rgb[0]);
+                rgb[1] = GammaCorrection_sRGB(rgb[1]);
+                rgb[2] = GammaCorrection_sRGB(rgb[2]);
+
+                XYZ[0] = 0.412391 * rgb[0] + 0.357584 * rgb[1] + 0.180481 * rgb[2];
+                XYZ[1] = 0.212639 * rgb[0] + 0.715169 * rgb[1] + 0.072192 * rgb[2];
+                XYZ[2] = 0.019331 * rgb[0] + 0.119195 * rgb[1] + 0.950532 * rgb[2];
             }
             else if (standard.Equals("Adobe RGB"))
             {
 
             }
-            return (sRGB_D65Matrix * (rgb / 255.0));
+
+            return XYZ;
+        }
+
+        private static double GammaCorrection_sRGB(double val)
+        {
+            if (val <= 0.040450)
+            {
+                return (val / 12.92);
+            }
+            else
+            {
+                return Math.Pow(((val + 0.055) / 1.055), 2.4);
+            }
         }
     }
 }

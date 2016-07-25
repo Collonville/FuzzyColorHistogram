@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:oxy="http://oxyplot.org/wpf"
         xmlns:local="clr-namespace:FuzzyColorHistogram1"
-        Title="Histogram" Height="800" Width="785.075">
+        Title="Histogram" Height="735.821" Width="785.075">
     <Grid x:Name="root" Background="Transparent" AllowDrop="True" Drop="root_Drop" Margin="0,0,0.4,-61.2" Height="434" VerticalAlignment="Top">
         <Grid.ColumnDefinitions>
 

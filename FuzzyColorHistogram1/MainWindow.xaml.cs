@@ -84,6 +84,9 @@ namespace FuzzyColorHistogram1
             {
                 var img = new BitmapImage(new Uri(filename, UriKind.Absolute));
                 ImageSource = BitmapFactory.ConvertToPbgra32Format(img);
+
+                Division = int.Parse(DivisionTextBox.Text.ToString());
+                initGraph();
                 CalcHistogram();
             }
         }
@@ -100,7 +103,6 @@ namespace FuzzyColorHistogram1
             }
         }
 
-
         private void initGraph()
         {
             ColorHist.Series.Clear();
@@ -115,13 +117,24 @@ namespace FuzzyColorHistogram1
             FCHHist.InvalidatePlot(true);
             FCHHist.Title = "Fuzzy Color Histogram";
         }
+
+        private int color2Index(double color)
+        {
+            double section = 256.0 / Division;
+
+            return (int)(color / section);
+        }
+
         private Vector<double> createRGBHist(List<Vector<double>> rgbList)
         {
             Vector<double> RGB = new DenseVector((int)Math.Pow(Division, 3.0));
 
             foreach (var rgb in rgbList)
             {
-                int index = (int)(rgb[0] % Division) * Division * Division + (int)(rgb[1] % Division) * Division + (int)(rgb[2] % Division);
+                int index =
+                    color2Index(rgb[0]) * Division * Division + 
+                    color2Index(rgb[1]) * Division +
+                    color2Index(rgb[2]);
 
                 RGB[index]++;
             }
@@ -152,12 +165,12 @@ namespace FuzzyColorHistogram1
 
             foreach (var rgb in rgbList)
             {
-                Vector<double> LabVec = CIELab.XYZtoLab(XYZ.RGBtoXYZ(rgb));
+                Vector<double> LabVec = CIELab.XYZtoLab(XYZ.RGB2XYZ(rgb, "sRGB"));
 
                 int index =
-                    ((int)(2.55 * LabVec[0]) % Division) * Division * Division +
-                    ((int)(295.37 * LabVec[1] + 255) % Division) * Division +
-                    (int)(237.22 * LabVec[2] + 255) % Division;
+                    color2Index(2.55 * LabVec[0]) * Division * Division +
+                    color2Index(1.3859 * LabVec[1] + 119.18) * Division +
+                    color2Index(1.2624 * LabVec[2] + 136.34);
 
                 Lab[index]++;
             }
@@ -184,14 +197,22 @@ namespace FuzzyColorHistogram1
 
         private void CalcHistogram()
         {
+            points.Clear();
             getColorData(ref points);
 
             Division = int.Parse(DivisionTextBox.Text);
 
-            rgbHist = createRGBHist(points);
-            labHist = createLabHist(points);
+            if (Division <= 0 || ImageSource == null)
+            {
+                InfoMationTextBlock.Text = "Set Division more than 0 or Picture is not selected";
+            }
+            else
+            {
+                rgbHist = createRGBHist(points);
+                labHist = createLabHist(points);
 
-            InfoMationTextBlock.Text = "Load Histogram " + (int)Math.Pow(Division, 3.0) + " bins";
+                InfoMationTextBlock.Text = "Load Histogram " + (int)Math.Pow(Division, 3.0) + " bins";
+            } 
         }
 
         private void StartFCH_Click(object sender, RoutedEventArgs e)
@@ -199,16 +220,29 @@ namespace FuzzyColorHistogram1
             double fuzzifier = double.Parse(FuzzifierTextBox.Text);
             int clusterNum = int.Parse(ClusterNumTextBox.Text);
 
+            CalcHistogram();
+
             FuzzyCMeans fcm = new FuzzyCMeans(labHist, fuzzifier, clusterNum);
 
             fcm.run();
 
-            var U = Matrix<double>.Build.DenseOfArray(fcm.U);
+            /*
+            for (int x = 0; x < (int)Math.Pow(Division, 3.0) ; x++)
+            {
+                double sum = 0.0;
+                for (int y = 0; y < clusterNum; y++)
+                {
+                    sum += fcm.U[x, y];
+                }
+                Console.WriteLine(sum);
+            }*/
 
-            Vector<double> FCH = Vector<double>.Build.Dense(clusterNum);
+            var U = Matrix<double>.Build.DenseOfArray(fcm.U).Transpose();
+           
+            Matrix<double> rgbTransportedHist = rgbHist.ToColumnMatrix();
 
-            FCH = U.Transpose() * rgbHist;
-
+            var FCH = U.Multiply(rgbTransportedHist).Column(0);
+            
             // グラフの作成
             var graphStep = new StairStepSeries()
             {

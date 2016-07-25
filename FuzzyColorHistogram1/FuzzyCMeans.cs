@@ -67,57 +67,75 @@ namespace FuzzyColorHistogram1
             U = new double[this.featureVector.Count, numCluster];
             this.Fuzzyness = fuzzy;
 
-            double diff;
-
             //Create random points to use a the cluster centroids
             Random random = new Random();
             for (int i = 0; i < numCluster; i++)
             {
                 int randomNumber1 = random.Next(featureVector.Count);
+                Console.WriteLine(randomNumber1);
 
                 Clusters.Add(new ClusterCentroid(randomNumber1, featureVector[randomNumber1]));
             }
 
-            // Iterate through all points to create initial U matrix
-            for (int i = 0; i < this.featureVector.Count; i++)
-            {
-                double sum = 0.0;
-
-                for (int j = 0; j < numCluster; j++)
-                {
-                    ClusterCentroid c = this.Clusters[j];
-                    diff = Math.Sqrt(Math.Pow(CalculateEuclideanDistance(featureVector[i], c.Length), 2.0));
-                    U[i, j] = (diff == 0) ? Eps : diff;
-                    sum += U[i, j];
-                }
-             }
+            initU();
 
             this.RecalculateClusterMembershipValues();
+        }
+
+        private void initU()
+        {
+            var rd = new Random();
+
+            for (var x = 0; x < featureVector.Count; x++)
+            {
+                var maximum = 1.0;
+                const double minimum = 0;
+                for (var c = 0; c < numCluster; c++)
+                {
+                    if (c == numCluster - 1)
+                    {
+                        U[x, c] = maximum;
+                    }
+                    else
+                    {
+                        U[x, c] = rd.NextDouble() * (maximum - minimum) + minimum;
+                        maximum -= U[x, c];
+                    }
+                }
+            }
+
+            /*
+            for (var x = 0; x < featureVector.Count; x++)
+            {
+                double sum = 0.0;
+                for (var c = 0; c < numCluster; c++)
+                {
+                    sum += U[x, c];
+                }
+                Console.WriteLine(sum);
+            }*/
         }
 
         public void run()
         {
             int k = 0;
+            J = CalculateObjectiveFunction();
+
             do
             {
-                k++;
-                J = CalculateObjectiveFunction();
                 CalculateClusterCentroids();
                 Step();
                 double Jnew = CalculateObjectiveFunction();
                 double diff = Math.Abs(J - Jnew);
 
-               
+                J = Jnew;
+          
                 Console.WriteLine("Run method i={0} accuracy = {1} delta={2}", k, J, diff);
-
-                // Format and display the TimeSpan value.
-                // string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", stopWatch.Elapsed.Hours, stopWatch.Elapsed.Minutes, stopWatch.Elapsed.Seconds, stopWatch.Elapsed.Milliseconds / 10);
-                // toolStripStatusLabel3.Text = "Duration: " + elapsedTime;
-
-                //backgroundWorker.ReportProgress((100 * k) / maxIterations, "Iteration " + k);
 
                 if (diff < Eps) 
                     break;
+
+                k++;
             }
             while (maxIterations > k);
 
@@ -169,37 +187,30 @@ namespace FuzzyColorHistogram1
         /// </summary>
         public void Step()
         {
+            double p = 2.0 / (this.Fuzzyness - 1.0);
+
             for (int i = 0; i < Clusters.Count; i++)
             {
                 for (int k = 0; k < featureVector.Count; k++)
                 {
-                    double top = Math.Pow(CalculateEuclideanDistance(featureVector[k], Clusters[i].Length), 2.0);
-
-                    if (top < 1.0) 
-                        top = Eps;
+                    double top = EuclideanDistance(featureVector[k], Clusters[i].Length);
 
                     // sumTerms is the sum of distances from this data point to all clusters.
                     double sumTerms = 0.0;
-
                     for (int j = 0; j < Clusters.Count; j++)
                     {
-                        sumTerms += Math.Pow(CalculateEuclideanDistance(featureVector[k], Clusters[j].Length), 2.0);
+                        double val = top / EuclideanDistance(featureVector[k], Clusters[j].Length);
+                        sumTerms += Math.Pow(val, p);
                     }
 
-                    U[k, i] = (double)(1.0 / Math.Pow(top / sumTerms, (2 / (this.Fuzzyness - 1)))); 
+                    U[k, i] = 1.0 / sumTerms;
                 }
             }
 
             this.RecalculateClusterMembershipValues();
         }
 
-        /// <summary>
-        /// Calculates Euclidean Distance distance between a point and a cluster centroid
-        /// </summary>
-        /// <param name="x">Point</param>
-        /// <param name="v">Centroid</param>
-        /// <returns>Calculated distance</returns>
-        private double CalculateEuclideanDistance(double x, double v) 
+        private double EuclideanDistance(double x, double v) 
         {
             return Math.Sqrt(Math.Pow(x - v, 2.0)); 
         }
@@ -216,7 +227,7 @@ namespace FuzzyColorHistogram1
             {
                 for (int i = 0; i < this.Clusters.Count; i++)
                 {
-                    Jk += Math.Pow(U[k, i], this.Fuzzyness) * Math.Pow(this.CalculateEuclideanDistance(featureVector[k], Clusters[i].Length), 2);
+                    Jk += Math.Pow(U[k, i], this.Fuzzyness) * Math.Pow(this.EuclideanDistance(featureVector[k], Clusters[i].Length), 2);
                 }
             }
             return Jk;

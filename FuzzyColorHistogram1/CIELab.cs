@@ -21,7 +21,7 @@ namespace FuzzyColorHistogram1
             } 
             else
             {
-                return (((Math.Pow(29.0 / 3.0, 3.0) * t) + 16) / 116.0);
+                return ((Math.Pow(29.0 /3.0, 3) * t + 16) / 116.0);
             }
         }
 
@@ -29,9 +29,9 @@ namespace FuzzyColorHistogram1
         {
             Vector<double> Lab = new DenseVector(3);
 
-            Lab[0] = 116.0 * f(xyz[1] / WhitePoint_D50[1]) - 16.0;
-            Lab[1] = 500.0 * (f(xyz[0] / WhitePoint_D50[0]) - f(xyz[1] / WhitePoint_D50[1])) / 100;
-            Lab[2] = 200.0 * (f(xyz[1] / WhitePoint_D50[1]) - f(xyz[2] / WhitePoint_D50[2])) / 100;
+            Lab[0] = 116.0 * f(xyz[1] / WhitePoint_D65[1]) - 16.0;
+            Lab[1] = 500.0 * (f(xyz[0] / WhitePoint_D65[0]) - f(xyz[1] / WhitePoint_D65[1]));
+            Lab[2] = 200.0 * (f(xyz[1] / WhitePoint_D65[1]) - f(xyz[2] / WhitePoint_D65[2]));
 
             return Lab;
         }
