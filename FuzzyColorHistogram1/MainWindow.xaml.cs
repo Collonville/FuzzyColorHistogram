@@ -187,7 +187,7 @@ namespace FuzzyColorHistogram1
             {
                 graphStep.Points.Add(new DataPoint(x, Lab[x]));
             }
-
+            Console.WriteLine("----------------------------------------");
             LabHist.Series.Clear();
             LabHist.Series.Add(graphStep);
             LabHist.InvalidatePlot(true);
@@ -222,26 +222,36 @@ namespace FuzzyColorHistogram1
 
             CalcHistogram();
 
+            labHist = labHist.Normalize(2);
+
             FuzzyCMeans fcm = new FuzzyCMeans(labHist, fuzzifier, clusterNum);
 
             fcm.run();
 
+
             /*
-            for (int x = 0; x < (int)Math.Pow(Division, 3.0) ; x++)
+            for (int x = 0; x < clusterNum; x++)
             {
                 double sum = 0.0;
-                for (int y = 0; y < clusterNum; y++)
+                for (int y = 0; y < (int)Math.Pow(Division, 3.0); y++)
                 {
                     sum += fcm.U[x, y];
                 }
-                Console.WriteLine(sum);
+                //Console.WriteLine(sum);
             }*/
 
-            var U = Matrix<double>.Build.DenseOfArray(fcm.U).Transpose();
-           
-            Matrix<double> rgbTransportedHist = rgbHist.ToColumnMatrix();
+            double[] FCH = new double[clusterNum];
 
-            var FCH = U.Multiply(rgbTransportedHist).Column(0);
+
+            for (int x = 0; x < clusterNum; x++)
+            {
+                double sum = 0.0;
+                for (int y = 0; y < (int)Math.Pow(Division, 3.0); y++)
+                {
+                    sum += fcm.U[y, x] * rgbHist[y];
+                }
+                FCH[x] = sum;
+            }
             
             // グラフの作成
             var graphStep = new StairStepSeries()

@@ -21,7 +21,7 @@ namespace FuzzyColorHistogram1
         /// <summary>
         /// Array containing all clusters handled by the algorithm
         /// </summary>
-        private List<ClusterCentroid> Clusters = new List<ClusterCentroid>();
+        private ClusterCentroid[] Clusters;
 
         /// <summary>
         /// Array containing all clusters membership value of all points to each cluster
@@ -61,6 +61,7 @@ namespace FuzzyColorHistogram1
         /// <param name="numCluster">The number of clusters requested by the user from the GUI</param>
         public FuzzyCMeans(Vector<double> points, double fuzzy, int numCluster)
         {
+            Clusters = new ClusterCentroid[numCluster];
             this.numCluster = numCluster;
             featureVector = points;
 
@@ -68,21 +69,133 @@ namespace FuzzyColorHistogram1
             this.Fuzzyness = fuzzy;
 
             //Create random points to use a the cluster centroids
+            /*
             Random random = new Random();
             for (int i = 0; i < numCluster; i++)
             {
                 int randomNumber1 = random.Next(featureVector.Count);
-                Console.WriteLine(randomNumber1);
 
                 Clusters.Add(new ClusterCentroid(randomNumber1, featureVector[randomNumber1]));
-            }
+            }*/
 
-            initU();
+            InitClusterUsingKPlusPlus();
+
+            InitU();
 
             this.RecalculateClusterMembershipValues();
         }
 
-        private void initU()
+        private void InitClusterUsingKPlusPlus()
+        {
+            Random random = new Random();
+
+            int numPoints = featureVector.Count;
+
+            bool[] check = new bool[numPoints];
+            double[] minDistSquared = new double[numPoints];
+            int firstPoint = random.Next(numPoints);
+
+            int clusterIndex = 0;
+
+            Clusters[clusterIndex] = new ClusterCentroid(firstPoint, featureVector[firstPoint]);
+            check[firstPoint] = true;
+
+            // Initialize the elements. 
+            for (int i = 0; i < numPoints; i++)
+            {
+                if (i != firstPoint)
+                {
+                    double d = Math.Abs(Clusters[clusterIndex].X - featureVector[i]);
+                    minDistSquared[i] = d * d;
+                }
+            }
+
+            int initedCluster = 1;
+            while (initedCluster < numCluster)
+            {
+                double distSqSum = 0.0;
+                for (int i = 0; i < numPoints; i++)
+                {
+                    if (!check[i])
+                    {
+                        distSqSum += minDistSquared[i];
+                    }
+                }
+
+                double r = random.NextDouble() * distSqSum;
+                
+
+                // The index of the next point to be added to the resultSet.
+                int nextPointIndex = -1;
+                double sum = 0.0;
+
+                // Sum through the squared min distances again, stopping when
+                // sum >= r.
+                for(int i = 0; i < numPoints; i++)
+                {
+                    if (!check[i]) 
+                    {
+                        sum += minDistSquared[i];
+                        if(sum >= r)
+                        {
+                            nextPointIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (nextPointIndex == -1)
+                {
+                    for (int i = numPoints - 1; i >= 0; i--)
+                    {
+                        if (!check[i])
+                        {
+                            nextPointIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (nextPointIndex >= 0)
+                {
+                    clusterIndex++;
+                    Clusters[clusterIndex] = new ClusterCentroid(nextPointIndex, featureVector[nextPointIndex]);
+                    check[nextPointIndex] = true;
+
+                    if (initedCluster < numCluster)
+                    {
+                        for (int i = 0; i < numPoints; i++)
+                        {
+                            if (!check[i])
+                            {
+                                double d = Math.Abs(Clusters[clusterIndex].X - featureVector[i]);
+                                double d2 = d * d;
+
+                                if (d2 < minDistSquared[i])
+                                {
+                                    minDistSquared[i] = d2;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("None Found,Break from the while loop to prevent,an infinite loop");
+                    break;
+                }
+
+                initedCluster = 0;
+                //初期値が決まっていないクラスタの個数を数える
+                for (int i = 0; i < Clusters.Length; i++)
+                {
+                    if (Clusters[i] != null)
+                        initedCluster++;
+                }
+            }
+        }
+
+        private void InitU()
         {
             var rd = new Random();
 
@@ -156,19 +269,19 @@ namespace FuzzyColorHistogram1
                double newmax = 0;
                var p = this.featureVector[i];
                //Normalize the entries
-               for (int j = 0; j < this.Clusters.Count; j++)
+               for (int j = 0; j < this.Clusters.Length; j++)
                {
                    max = U[i, j] > max ? U[i, j] : max;
                    min = U[i, j] < min ? U[i, j] : min;
                }
                //Sets the values to the normalized values between 0 and 1
-               for (int j = 0; j < this.Clusters.Count; j++)
+               for (int j = 0; j < this.Clusters.Length; j++)
                {
                    U[i, j] = (U[i, j] - min) / (max - min);
                    sum += U[i, j];
                }
                //Makes it so that the sum of all values is 1 
-               for (int j = 0; j < this.Clusters.Count; j++)
+               for (int j = 0; j < this.Clusters.Length; j++)
                {
                    U[i, j] = U[i, j] / sum;
                    if (double.IsNaN(U[i, j]))
@@ -189,7 +302,7 @@ namespace FuzzyColorHistogram1
         {
             double p = 2.0 / (this.Fuzzyness - 1.0);
 
-            for (int i = 0; i < Clusters.Count; i++)
+            for (int i = 0; i < Clusters.Length; i++)
             {
                 for (int k = 0; k < featureVector.Count; k++)
                 {
@@ -197,7 +310,7 @@ namespace FuzzyColorHistogram1
 
                     // sumTerms is the sum of distances from this data point to all clusters.
                     double sumTerms = 0.0;
-                    for (int j = 0; j < Clusters.Count; j++)
+                    for (int j = 0; j < Clusters.Length; j++)
                     {
                         double val = top / EuclideanDistance(featureVector[k], Clusters[j].Length);
                         sumTerms += Math.Pow(val, p);
@@ -225,7 +338,7 @@ namespace FuzzyColorHistogram1
 
             for (int k = 0; k < this.featureVector.Count; k++)
             {
-                for (int i = 0; i < this.Clusters.Count; i++)
+                for (int i = 0; i < this.Clusters.Length; i++)
                 {
                     Jk += Math.Pow(U[k, i], this.Fuzzyness) * Math.Pow(this.EuclideanDistance(featureVector[k], Clusters[i].Length), 2);
                 }
@@ -239,7 +352,7 @@ namespace FuzzyColorHistogram1
         public void CalculateClusterCentroids()
         {
             //Console.WriteLine("Cluster Centroid calculation:");
-            for (int i = 0; i < this.Clusters.Count; i++)
+            for (int i = 0; i < this.Clusters.Length; i++)
             {
                 ClusterCentroid c = this.Clusters[i];
                 double l = 0.0;
